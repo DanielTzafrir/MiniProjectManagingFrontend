@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api", // Update if your API port differs
+  baseURL: "http://localhost:5112/api",
 });
 
 api.interceptors.request.use((config) => {
@@ -9,17 +9,15 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log("Request:", config);
   return config;
 });
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
+    const errMsg = error.response?.data || "An error occurred";
+    return Promise.reject({ ...error, message: errMsg });
   }
 );
 

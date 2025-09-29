@@ -6,11 +6,18 @@ import TaskForm from "./TaskForm";
 import { updateTask, deleteTask } from "../../services/taskService";
 import { TaskUpdateDto } from "../../types/task";
 import ErrorMessage from "../Common/ErrorMessage";
+import { TaskDto } from "../../types/task";
 
 const ProjectDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<ProjectDto | null>(null);
   const [error, setError] = useState<string>("");
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editFormData, setEditFormData] = useState<TaskUpdateDto>({
+    title: "",
+    dueDate: "",
+    isCompleted: false,
+  });
 
   useEffect(() => {
     fetchProject();
@@ -20,27 +27,59 @@ const ProjectDetails: React.FC = () => {
     try {
       const data = await getProjectById(Number(id));
       setProject(data);
-    } catch (err) {
-      setError("Failed to load project");
+    } catch (err: any) {
+      setError(err || "Failed to load project");
+    }
+  };
+
+  const startEdit = (task: TaskDto) => {
+    setEditingTaskId(task.id);
+    setEditFormData({
+      title: task.title,
+      dueDate: task.dueDate,
+      isCompleted: task.isCompleted,
+    });
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
+  };
+
+  const validateEditForm = () => {
+    if (!editFormData.title) {
+      setError("Title required for update");
+      return false;
+    }
+    return true;
+  };
+
+  const handleUpdate = async (taskId: number) => {
+    if (!validateEditForm()) return;
+    try {
+      await updateTask(taskId, editFormData);
+      setEditingTaskId(null);
+      fetchProject();
+    } catch (err: any) {
+      setError(err || "Failed to update task");
     }
   };
 
   const handleToggleComplete = async (taskId: number, isCompleted: boolean) => {
     try {
-      const updateData: TaskUpdateDto = { isCompleted: !isCompleted };
-      await updateTask(taskId, updateData);
+      await updateTask(taskId, { isCompleted: !isCompleted });
       fetchProject();
-    } catch (err) {
-      setError("Failed to update task");
+    } catch (err: any) {
+      setError(err || "Failed to toggle task");
     }
   };
 
   const handleDeleteTask = async (taskId: number) => {
+    if (!window.confirm("Delete task?")) return;
     try {
       await deleteTask(taskId);
       fetchProject();
-    } catch (err) {
-      setError("Failed to delete task");
+    } catch (err: any) {
+      setError(err || "Failed to delete task");
     }
   };
 
@@ -55,13 +94,34 @@ const ProjectDetails: React.FC = () => {
       <ul>
         {project.tasks?.map((t) => (
           <li key={t.id}>
-            <input
-              type="checkbox"
-              checked={t.isCompleted}
-              onChange={() => handleToggleComplete(t.id, t.isCompleted)}
-            />
-            {t.title} {t.dueDate && `(Due: ${t.dueDate})`}
-            <button onClick={() => handleDeleteTask(t.id)}>Delete</button>
+            {editingTaskId === t.id ? (
+              <>
+                <input
+                  name="title"
+                  value={editFormData.title}
+                  onChange={handleEditChange}
+                />
+                <input
+                  name="dueDate"
+                  type="date"
+                  value={editFormData.dueDate || ""}
+                  onChange={handleEditChange}
+                />
+                <button onClick={() => handleUpdate(t.id)}>Save</button>
+                <button onClick={() => setEditingTaskId(null)}>Cancel</button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="checkbox"
+                  checked={t.isCompleted}
+                  onChange={() => handleToggleComplete(t.id, t.isCompleted)}
+                />
+                {t.title} {t.dueDate && `(Due: ${t.dueDate})`}
+                <button onClick={() => startEdit(t)}>Edit</button>
+                <button onClick={() => handleDeleteTask(t.id)}>Delete</button>
+              </>
+            )}
           </li>
         ))}
       </ul>

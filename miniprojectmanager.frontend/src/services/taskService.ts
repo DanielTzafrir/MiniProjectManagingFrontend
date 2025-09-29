@@ -5,6 +5,10 @@ export const createTask = async (
   projectId: number,
   data: TaskCreateDto
 ): Promise<TaskDto> => {
+  console.log(
+    `Creating task for projectId: ${projectId}, URL: /projects/${projectId}/tasks, Data:`,
+    data
+  );
   const response = await api.post(`/projects/${projectId}/tasks`, data);
   return response.data;
 };

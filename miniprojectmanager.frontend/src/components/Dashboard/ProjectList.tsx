@@ -24,8 +24,8 @@ const ProjectList: React.FC = () => {
     try {
       const data = await getProjects();
       setProjects(data);
-    } catch (err) {
-      setError("Failed to load projects");
+    } catch (err: any) {
+      setError(err || "Failed to load projects");
     }
   };
 
@@ -35,32 +35,46 @@ const ProjectList: React.FC = () => {
     setNewProject({ ...newProject, [e.target.name]: e.target.value });
   };
 
-  const handleCreate = async () => {
-    if (!newProject.title || newProject.title.length < 3) {
-      setError("Title required (3-100 chars)");
-      return;
+  const validateForm = () => {
+    if (
+      !newProject.title ||
+      newProject.title.length < 3 ||
+      newProject.title.length > 100
+    ) {
+      setError("Title must be 3-100 characters");
+      return false;
     }
+    if (newProject.description && newProject.description.length > 500) {
+      setError("Description max 500 characters");
+      return false;
+    }
+    return true;
+  };
+
+  const handleCreate = async () => {
+    if (!validateForm()) return;
     try {
       await createProject(newProject);
       setNewProject({ title: "", description: "" });
       fetchProjects();
-    } catch (err) {
-      setError("Failed to create project");
+    } catch (err: any) {
+      setError(err || "Failed to create project");
     }
   };
 
   const handleDelete = async (id: number) => {
+    if (!window.confirm("Delete project?")) return;
     try {
       await deleteProject(id);
       fetchProjects();
-    } catch (err) {
-      setError("Failed to delete project");
+    } catch (err: any) {
+      setError(err || "Failed to delete project");
     }
   };
 
   return (
     <div>
-      <h2>Projects</h2>
+      <h2>Dashboard - Projects</h2>
       <input
         name="title"
         value={newProject.title}
