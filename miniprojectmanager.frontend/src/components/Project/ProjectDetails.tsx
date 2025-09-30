@@ -20,6 +20,8 @@ const ProjectDetails: React.FC = () => {
     dueDate: "",
     isCompleted: false,
   });
+  const [filter, setFilter] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("title");
 
   const fetchProject = useCallback(async () => {
     setIsLoading(true);
@@ -111,6 +113,28 @@ const ProjectDetails: React.FC = () => {
     }
   };
 
+  const getFilteredAndSortedTasks = () => {
+    if (!project?.tasks) return [];
+    let tasks = [...project.tasks];
+    if (filter) {
+      tasks = tasks.filter((t) =>
+        t.title.toLowerCase().includes(filter.toLowerCase())
+      );
+    }
+    tasks.sort((a, b) => {
+      if (sortBy === "title") return a.title.localeCompare(b.title);
+      if (sortBy === "dueDate")
+        return (a.dueDate ? new Date(a.dueDate) : new Date(0)) >
+          (b.dueDate ? new Date(b.dueDate) : new Date(0))
+          ? 1
+          : -1;
+      if (sortBy === "completed")
+        return a.isCompleted === b.isCompleted ? 0 : a.isCompleted ? 1 : -1;
+      return 0;
+    });
+    return tasks;
+  };
+
   if (!project || isLoading) return <div>Loading...</div>;
 
   return (
@@ -120,6 +144,17 @@ const ProjectDetails: React.FC = () => {
           max-width: 800px;
           margin: 0 auto;
           padding: 20px;
+        }
+        .filter-sort {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 20px;
+        }
+        .filter-sort input, .filter-sort select {
+          padding: 10px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          flex: 1;
         }
         ul {
           list-style: none;
@@ -144,6 +179,11 @@ const ProjectDetails: React.FC = () => {
         button:hover {
           background: #ccc;
         }
+        .edit-form {
+          display: flex;
+          gap: 10px;
+          width: 100%;
+        }
         .edit-form input {
           flex: 1;
           padding: 5px;
@@ -155,9 +195,12 @@ const ProjectDetails: React.FC = () => {
           margin-top: 10px;
         }
         @media (max-width: 600px) {
-          li {
+          li, .edit-form {
             flex-direction: column;
             align-items: flex-start;
+          }
+          .filter-sort {
+            flex-direction: column;
           }
         }
       `}</style>
@@ -166,14 +209,23 @@ const ProjectDetails: React.FC = () => {
         <p>{project.description}</p>
         <h3>Tasks</h3>
         <TaskForm projectId={project.id} onTaskAdded={fetchProject} />
+        <div className="filter-sort">
+          <input
+            placeholder="Filter by title"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="title">Sort by Title</option>
+            <option value="dueDate">Sort by Due Date</option>
+            <option value="completed">Sort by Completed</option>
+          </select>
+        </div>
         <ul>
-          {project.tasks?.map((t) => (
+          {getFilteredAndSortedTasks().map((t) => (
             <li key={t.id}>
               {editingTaskId === t.id ? (
-                <div
-                  className="edit-form"
-                  style={{ display: "flex", gap: "10px", width: "100%" }}
-                >
+                <div className="edit-form">
                   <input
                     name="title"
                     value={editFormData.title}
