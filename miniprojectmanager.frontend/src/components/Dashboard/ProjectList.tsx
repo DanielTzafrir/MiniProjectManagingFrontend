@@ -92,39 +92,89 @@ const ProjectList: React.FC = () => {
   };
 
   return (
-    <div>
-      <h2>Dashboard - Projects</h2>
-      {isLoading && <div>Loading...</div>}{" "}
-      <input
-        name="title"
-        value={newProject.title}
-        onChange={handleChange}
-        placeholder="Title"
-        disabled={isLoading}
-      />
-      <textarea
-        name="description"
-        value={newProject.description}
-        onChange={handleChange}
-        placeholder="Description"
-        disabled={isLoading}
-      />
-      <button onClick={handleCreate} disabled={isLoading}>
-        Create Project
-      </button>
-      {error && <ErrorMessage message={error} />}
-      {success && <div style={{ color: "green" }}>{success}</div>}{" "}
-      <ul>
-        {projects.map((p) => (
-          <li key={p.id}>
-            <Link to={`/project/${p.id}`}>{p.title}</Link>
-            <button onClick={() => handleDelete(p.id)} disabled={isLoading}>
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <>
+      <style>{`
+        .project-list-container {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+        }
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 10px;
+        }
+        input, textarea, button {
+          padding: 10px;
+          font-size: 16px;
+          min-height: 44px; /* Touch-friendly */
+          box-sizing: border-box;
+        }
+        button {
+          margin-top: 10px;
+        }
+        ul {
+          list-style: none;
+          padding: 0;
+        }
+        li {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        }
+        @media (min-width: 768px) {
+          .form-group {
+            flex-direction: row;
+          }
+          input, textarea {
+            flex: 1;
+            margin-right: 10px;
+          }
+          button {
+            flex: 0 0 auto;
+            margin-top: 0;
+          }
+        }
+      `}</style>
+      <div className="project-list-container">
+        <h2>Dashboard - Projects</h2>
+        {isLoading && <div>Loading...</div>}
+        <div className="form-group">
+          <input
+            name="title"
+            value={newProject.title}
+            onChange={handleChange}
+            placeholder="Title"
+            disabled={isLoading}
+          />
+          <textarea
+            name="description"
+            value={newProject.description}
+            onChange={handleChange}
+            placeholder="Description"
+            disabled={isLoading}
+          />
+          <button onClick={handleCreate} disabled={isLoading}>
+            Create Project
+          </button>
+        </div>
+        {error && <ErrorMessage message={error} />}
+        {success && <div style={{ color: "green" }}>{success}</div>}
+        <ul>
+          {projects.map((p) => (
+            <li key={p.id}>
+              <Link to={`/project/${p.id}`}>{p.title}</Link>
+              <button onClick={() => handleDelete(p.id)} disabled={isLoading}>
+                Delete
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
   );
 };
 

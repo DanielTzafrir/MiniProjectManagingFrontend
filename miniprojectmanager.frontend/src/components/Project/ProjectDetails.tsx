@@ -12,6 +12,8 @@ const ProjectDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<ProjectDto | null>(null);
   const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<TaskUpdateDto>({
     title: "",
@@ -20,23 +22,31 @@ const ProjectDetails: React.FC = () => {
   });
 
   const fetchProject = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
     try {
       const data = await getProjectById(Number(id));
       setProject(data);
     } catch (err: any) {
       setError(err.response?.data?.Message || "Failed to load project");
+    } finally {
+      setIsLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
     fetchProject();
-  }, [id, fetchProject]);
+  }, [fetchProject]);
 
   const startEdit = (task: TaskDto) => {
     setEditingTaskId(task.id);
+    const formattedDueDate = task.dueDate
+      ? new Date(task.dueDate).toISOString().slice(0, 16)
+      : "";
     setEditFormData({
       title: task.title,
-      dueDate: task.dueDate,
+      dueDate: formattedDueDate,
       isCompleted: task.isCompleted,
     });
   };
@@ -54,79 +64,171 @@ const ProjectDetails: React.FC = () => {
   };
 
   const handleUpdate = async (taskId: number) => {
+    setError("");
+    setSuccess("");
     if (!validateEditForm()) return;
+    setIsLoading(true);
     try {
       await updateTask(taskId, editFormData);
       setEditingTaskId(null);
-      fetchProject();
+      await fetchProject();
+      setSuccess("Task updated successfully");
     } catch (err: any) {
       setError(err.response?.data?.Message || "Failed to update task");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleToggleComplete = async (taskId: number, isCompleted: boolean) => {
+    setError("");
+    setSuccess("");
+    setIsLoading(true);
     try {
       await updateTask(taskId, { isCompleted: !isCompleted });
-      fetchProject();
+      await fetchProject();
+      setSuccess("Task status updated");
     } catch (err: any) {
       setError(err.response?.data?.Message || "Failed to toggle task");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteTask = async (taskId: number) => {
     if (!window.confirm("Delete task?")) return;
+    setError("");
+    setSuccess("");
+    setIsLoading(true);
     try {
       await deleteTask(taskId);
-      fetchProject();
+      await fetchProject();
+      setSuccess("Task deleted successfully");
     } catch (err: any) {
       setError(err.response?.data?.Message || "Failed to delete task");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (!project) return <div>Loading...</div>;
+  if (!project || isLoading) return <div>Loading...</div>;
 
   return (
-    <div>
-      <h2>{project.title}</h2>
-      <p>{project.description}</p>
-      <h3>Tasks</h3>
-      <TaskForm projectId={project.id} onTaskAdded={fetchProject} />
-      <ul>
-        {project.tasks?.map((t) => (
-          <li key={t.id}>
-            {editingTaskId === t.id ? (
-              <>
-                <input
-                  name="title"
-                  value={editFormData.title}
-                  onChange={handleEditChange}
-                />
-                <input
-                  name="dueDate"
-                  type="date"
-                  value={editFormData.dueDate || ""}
-                  onChange={handleEditChange}
-                />
-                <button onClick={() => handleUpdate(t.id)}>Save</button>
-                <button onClick={() => setEditingTaskId(null)}>Cancel</button>
-              </>
-            ) : (
-              <>
-                <input
-                  type="checkbox"
-                  checked={t.isCompleted}
-                  onChange={() => handleToggleComplete(t.id, t.isCompleted)}
-                />
-                {t.title} {t.dueDate && `(Due: ${t.dueDate})`}
-                <button onClick={() => startEdit(t)}>Edit</button>
-                <button onClick={() => handleDeleteTask(t.id)}>Delete</button>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
-      {error && <ErrorMessage message={error} />}
-    </div>
+    <>
+      <style>{`
+        .project-details {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        ul {
+          list-style: none;
+          padding: 0;
+        }
+        li {
+          display: flex;
+          align-items: center;
+          margin-bottom: 10px;
+          gap: 10px;
+        }
+        input[type="checkbox"] {
+          margin-right: 10px;
+        }
+        button {
+          padding: 5px 10px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          background: #ddd;
+          cursor: pointer;
+        }
+        button:hover {
+          background: #ccc;
+        }
+        .edit-form input {
+          flex: 1;
+          padding: 5px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+        }
+        .success-message {
+          color: green;
+          margin-top: 10px;
+        }
+        @media (max-width: 600px) {
+          li {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+        }
+      `}</style>
+      <div className="project-details">
+        <h2>{project.title}</h2>
+        <p>{project.description}</p>
+        <h3>Tasks</h3>
+        <TaskForm projectId={project.id} onTaskAdded={fetchProject} />
+        <ul>
+          {project.tasks?.map((t) => (
+            <li key={t.id}>
+              {editingTaskId === t.id ? (
+                <div
+                  className="edit-form"
+                  style={{ display: "flex", gap: "10px", width: "100%" }}
+                >
+                  <input
+                    name="title"
+                    value={editFormData.title}
+                    onChange={handleEditChange}
+                    disabled={isLoading}
+                  />
+                  <input
+                    name="dueDate"
+                    type="datetime-local"
+                    value={editFormData.dueDate}
+                    onChange={handleEditChange}
+                    disabled={isLoading}
+                  />
+                  <button
+                    onClick={() => handleUpdate(t.id)}
+                    disabled={isLoading}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingTaskId(null)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="checkbox"
+                    checked={t.isCompleted}
+                    onChange={() => handleToggleComplete(t.id, t.isCompleted)}
+                    disabled={isLoading}
+                  />
+                  {t.title}{" "}
+                  {t.dueDate &&
+                    `(Due: ${new Date(t.dueDate).toLocaleString()})`}
+                  <button onClick={() => startEdit(t)} disabled={isLoading}>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteTask(t.id)}
+                    disabled={isLoading}
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
+            </li>
+          ))}
+        </ul>
+        {error && <ErrorMessage message={error} />}
+        {success && <div className="success-message">{success}</div>}
+      </div>
+    </>
   );
 };
 
