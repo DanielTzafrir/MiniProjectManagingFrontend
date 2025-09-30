@@ -30,20 +30,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, onTaskAdded }) => {
       setFormData({ title: "", dueDate: "" });
       onTaskAdded();
     } catch (err: any) {
-      if (err.response?.status === 401) {
+      const status = err.response?.status;
+      const apiMessage =
+        err.response?.data?.Message || err.message || "Failed to add task";
+      if (status === 401) {
         localStorage.removeItem("token");
-        window.location.href = "/login"; // Redirect here instead of interceptor
+        window.location.href = "/login";
         setError("Session expired - please log in again");
-      } else if (err.response?.status === 404) {
+      } else if (status === 404) {
         setError("Project not found - ensure it exists and is yours");
       } else {
-        const errorMessage =
-          typeof err.message === "string"
-            ? err.message
-            : err.message?.Message ||
-              JSON.stringify(err.message) ||
-              "Failed to add task";
-        setError(errorMessage);
+        setError(apiMessage);
       }
     }
   };

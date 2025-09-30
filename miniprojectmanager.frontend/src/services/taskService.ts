@@ -17,10 +17,10 @@ export const updateTask = async (
   taskId: number,
   data: TaskUpdateDto
 ): Promise<TaskDto> => {
-  const response = await api.put(`/tasks/${taskId}`, data);
+  const response = await api.put(`/projects/tasks/${taskId}`, data);
   return response.data;
 };
 
 export const deleteTask = async (taskId: number) => {
-  await api.delete(`/tasks/${taskId}`);
+  await api.delete(`/projects/tasks/${taskId}`);
 };

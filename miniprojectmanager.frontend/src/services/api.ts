@@ -9,15 +9,21 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  console.log("Request:", config);
   return config;
 });
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const errMsg = error.response?.data || "An error occurred";
-    return Promise.reject({ ...error, message: errMsg });
+    const message =
+      error.response?.data?.Message ||
+      error.response?.data ||
+      error.message ||
+      "An error occurred";
+    return Promise.reject({
+      ...error,
+      message: typeof message === "string" ? message : JSON.stringify(message),
+    });
   }
 );
 

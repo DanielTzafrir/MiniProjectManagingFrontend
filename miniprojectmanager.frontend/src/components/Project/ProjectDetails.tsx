@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { getProjectById } from "../../services/projectService";
 import { ProjectDto } from "../../types/project";
@@ -19,18 +19,18 @@ const ProjectDetails: React.FC = () => {
     isCompleted: false,
   });
 
-  useEffect(() => {
-    fetchProject();
-  }, [id]);
-
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const data = await getProjectById(Number(id));
       setProject(data);
     } catch (err: any) {
-      setError(err || "Failed to load project");
+      setError(err.response?.data?.Message || "Failed to load project");
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchProject();
+  }, [id, fetchProject]);
 
   const startEdit = (task: TaskDto) => {
     setEditingTaskId(task.id);
@@ -60,7 +60,7 @@ const ProjectDetails: React.FC = () => {
       setEditingTaskId(null);
       fetchProject();
     } catch (err: any) {
-      setError(err || "Failed to update task");
+      setError(err.response?.data?.Message || "Failed to update task");
     }
   };
 
@@ -69,7 +69,7 @@ const ProjectDetails: React.FC = () => {
       await updateTask(taskId, { isCompleted: !isCompleted });
       fetchProject();
     } catch (err: any) {
-      setError(err || "Failed to toggle task");
+      setError(err.response?.data?.Message || "Failed to toggle task");
     }
   };
 
@@ -79,7 +79,7 @@ const ProjectDetails: React.FC = () => {
       await deleteTask(taskId);
       fetchProject();
     } catch (err: any) {
-      setError(err || "Failed to delete task");
+      setError(err.response?.data?.Message || "Failed to delete task");
     }
   };
 

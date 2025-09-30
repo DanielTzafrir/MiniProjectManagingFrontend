@@ -25,7 +25,7 @@ const ProjectList: React.FC = () => {
       const data = await getProjects();
       setProjects(data);
     } catch (err: any) {
-      setError(err || "Failed to load projects");
+      setError(err.response?.data?.Message || "Failed to load projects");
     }
   };
 
@@ -58,7 +58,7 @@ const ProjectList: React.FC = () => {
       setNewProject({ title: "", description: "" });
       fetchProjects();
     } catch (err: any) {
-      setError(err || "Failed to create project");
+      setError(err.response?.data?.Message || "Failed to create project");
     }
   };
 
@@ -68,7 +68,7 @@ const ProjectList: React.FC = () => {
       await deleteProject(id);
       fetchProjects();
     } catch (err: any) {
-      setError(err || "Failed to delete project");
+      setError(err.response?.data?.Message || "Failed to delete project");
     }
   };
 

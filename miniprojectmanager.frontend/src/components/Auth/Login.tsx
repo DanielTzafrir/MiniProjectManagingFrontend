@@ -36,13 +36,7 @@ const Login: React.FC = () => {
         navigate("/login");
         setError("Session expired - please log in again");
       } else {
-        const errorMessage =
-          typeof err.message === "string"
-            ? err.message
-            : err.message?.Message ||
-              JSON.stringify(err.message) ||
-              "Invalid credentials";
-        setError(errorMessage);
+        setError(err.message || "Invalid credentials");
       }
     }
   };
