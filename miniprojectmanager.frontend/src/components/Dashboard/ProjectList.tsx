@@ -15,17 +15,24 @@ const ProjectList: React.FC = () => {
     description: "",
   });
   const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     fetchProjects();
   }, []);
 
   const fetchProjects = async () => {
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
     try {
       const data = await getProjects();
       setProjects(data);
     } catch (err: any) {
       setError(err.response?.data?.Message || "Failed to load projects");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -52,48 +59,68 @@ const ProjectList: React.FC = () => {
   };
 
   const handleCreate = async () => {
+    setError("");
+    setSuccess("");
     if (!validateForm()) return;
+    setIsLoading(true);
     try {
       await createProject(newProject);
       setNewProject({ title: "", description: "" });
-      fetchProjects();
+      await fetchProjects();
+      setSuccess("Project created successfully");
     } catch (err: any) {
       setError(err.response?.data?.Message || "Failed to create project");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("Delete project?")) return;
+    setError("");
+    setSuccess("");
+    setIsLoading(true);
     try {
       await deleteProject(id);
-      fetchProjects();
+      await fetchProjects();
+      setSuccess("Project deleted successfully");
     } catch (err: any) {
       setError(err.response?.data?.Message || "Failed to delete project");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div>
       <h2>Dashboard - Projects</h2>
+      {isLoading && <div>Loading...</div>}{" "}
       <input
         name="title"
         value={newProject.title}
         onChange={handleChange}
         placeholder="Title"
+        disabled={isLoading}
       />
       <textarea
         name="description"
         value={newProject.description}
         onChange={handleChange}
         placeholder="Description"
+        disabled={isLoading}
       />
-      <button onClick={handleCreate}>Create Project</button>
+      <button onClick={handleCreate} disabled={isLoading}>
+        Create Project
+      </button>
       {error && <ErrorMessage message={error} />}
+      {success && <div style={{ color: "green" }}>{success}</div>}{" "}
       <ul>
         {projects.map((p) => (
           <li key={p.id}>
             <Link to={`/project/${p.id}`}>{p.title}</Link>
-            <button onClick={() => handleDelete(p.id)}>Delete</button>
+            <button onClick={() => handleDelete(p.id)} disabled={isLoading}>
+              Delete
+            </button>
           </li>
         ))}
       </ul>
