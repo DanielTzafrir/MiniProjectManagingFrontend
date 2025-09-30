@@ -10,3 +10,7 @@ export const register = async (data: RegisterDto) => {
   const response = await api.post("/auth/register", data);
   localStorage.setItem("token", response.data.token);
 };
+
+export const logout = () => {
+  localStorage.removeItem("token");
+};
