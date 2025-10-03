@@ -29,6 +29,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, onTaskAdded }) => {
       setError("Title required");
       return;
     }
+    if (formData.dueDate && !Date.parse(formData.dueDate)) {
+      setError("Invalid due date format");
+      return;
+    }
     setIsLoading(true);
     try {
       await createTask(projectId, formData);

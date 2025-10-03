@@ -5,11 +5,11 @@ export const createTask = async (
   projectId: number,
   data: TaskCreateDto
 ): Promise<TaskDto> => {
-  console.log(
-    `Creating task for projectId: ${projectId}, URL: /projects/${projectId}/tasks, Data:`,
-    data
-  );
-  const response = await api.post(`/projects/${projectId}/tasks`, data);
+  const submitData = { ...data };
+  if (submitData.dueDate) {
+    submitData.dueDate = new Date(submitData.dueDate).toISOString();
+  }
+  const response = await api.post(`/projects/${projectId}/tasks`, submitData);
   return response.data;
 };
 
@@ -17,7 +17,11 @@ export const updateTask = async (
   taskId: number,
   data: TaskUpdateDto
 ): Promise<TaskDto> => {
-  const response = await api.put(`/projects/tasks/${taskId}`, data);
+  const submitData = { ...data };
+  if (submitData.dueDate) {
+    submitData.dueDate = new Date(submitData.dueDate).toISOString();
+  }
+  const response = await api.put(`/projects/tasks/${taskId}`, submitData);
   return response.data;
 };
 
