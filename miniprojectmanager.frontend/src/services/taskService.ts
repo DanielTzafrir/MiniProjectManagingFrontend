@@ -8,6 +8,8 @@ export const createTask = async (
   const submitData = { ...data };
   if (submitData.dueDate) {
     submitData.dueDate = new Date(submitData.dueDate).toISOString();
+  } else {
+    delete submitData.dueDate;
   }
   const response = await api.post(`/projects/${projectId}/tasks`, submitData);
   return response.data;
@@ -20,6 +22,8 @@ export const updateTask = async (
   const submitData = { ...data };
   if (submitData.dueDate) {
     submitData.dueDate = new Date(submitData.dueDate).toISOString();
+  } else {
+    delete submitData.dueDate;
   }
   const response = await api.put(`/projects/tasks/${taskId}`, submitData);
   return response.data;
